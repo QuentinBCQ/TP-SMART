@@ -6,7 +6,10 @@ import "./SafeMath.sol";
 
 contract Election is Ownable {
 
-using SafeMath for uint256;
+    using SafeMath for uint256;
+
+    // Adresse fixe autorisée à ajouter des candidats (mon adresse)
+    address private constant admin = 0xCf174b22f131F0685F369A4dFeB7CF2E0569466a;
 
     // Model a Candidate
     struct Candidate {
@@ -17,34 +20,23 @@ using SafeMath for uint256;
 
     // Store accounts that have voted
     mapping(address => bool) public voters;
-    // Store Candidates
-    // Fetch Candidate
     mapping(uint => Candidate) public candidates;
-    // Store Candidates Count
     uint public candidatesCount;
 
-    // voted event
-    event votedEvent ( uint indexed _candidateId);
+    event votedEvent (uint indexed _candidateId);
 
-    function addCandidate (string memory _name) public onlyOwner {
-        candidatesCount ++;
+    // Seule l’adresse admin peut ajouter un candidat
+    function addCandidate(string memory _name) public {
+        require(msg.sender == admin, "Seul l'administrateur peut ajouter un candidat.");
+        candidatesCount++;
         candidates[candidatesCount] = Candidate(candidatesCount, _name, 0);
     }
 
-    function vote (uint _candidateId) public {
-        // require that they haven't voted before
-        require(!voters[msg.sender]);
-
-        // require a valid candidate
-        require(_candidateId > 0 && _candidateId <= candidatesCount);
-
-        // record that voter has voted
+    function vote(uint _candidateId) public {
+        require(!voters[msg.sender], "Vous avez deja vote.");
+        require(_candidateId > 0 && _candidateId <= candidatesCount, "Candidat invalide.");
         voters[msg.sender] = true;
-
-        // update candidate vote Count
-        candidates[_candidateId].voteCount ++;
-
-        // trigger voted event
-        emit votedEvent (_candidateId);
+        candidates[_candidateId].voteCount++;
+        emit votedEvent(_candidateId);
     }
 }
